@@ -1,0 +1,22 @@
+{
+  "files": {
+    "main.css": "/sndaspuzzlesgenerator/static/css/main.5f361e03.chunk.css",
+    "main.js": "/sndaspuzzlesgenerator/static/js/main.34cfdfcc.chunk.js",
+    "main.js.map": "/sndaspuzzlesgenerator/static/js/main.34cfdfcc.chunk.js.map",
+    "runtime-main.js": "/sndaspuzzlesgenerator/static/js/runtime-main.13a90a41.js",
+    "runtime-main.js.map": "/sndaspuzzlesgenerator/static/js/runtime-main.13a90a41.js.map",
+    "static/js/2.d608b861.chunk.js": "/sndaspuzzlesgenerator/static/js/2.d608b861.chunk.js",
+    "static/js/2.d608b861.chunk.js.map": "/sndaspuzzlesgenerator/static/js/2.d608b861.chunk.js.map",
+    "index.html": "/sndaspuzzlesgenerator/index.html",
+    "precache-manifest.50e82f77761e79faa4f20a7deb72cd05.js": "/sndaspuzzlesgenerator/precache-manifest.50e82f77761e79faa4f20a7deb72cd05.js",
+    "service-worker.js": "/sndaspuzzlesgenerator/service-worker.js",
+    "static/css/main.5f361e03.chunk.css.map": "/sndaspuzzlesgenerator/static/css/main.5f361e03.chunk.css.map",
+    "static/js/2.d608b861.chunk.js.LICENSE.txt": "/sndaspuzzlesgenerator/static/js/2.d608b861.chunk.js.LICENSE.txt"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.13a90a41.js",
+    "static/js/2.d608b861.chunk.js",
+    "static/css/main.5f361e03.chunk.css",
+    "static/js/main.34cfdfcc.chunk.js"
+  ]
+}
