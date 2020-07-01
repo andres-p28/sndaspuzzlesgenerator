@@ -14,7 +14,7 @@
 importScripts("https://storage.googleapis.com/workbox-cdn/releases/4.3.1/workbox-sw.js");
 
 importScripts(
-  "/sndaspuzzlesgenerator/precache-manifest.35e1bb28bafc45515c3051e6fd8c66c2.js"
+  "/sndaspuzzlesgenerator/precache-manifest.df29f05a995c561a20d8d5fbc09e0d02.js"
 );
 
 self.addEventListener('message', (event) => {

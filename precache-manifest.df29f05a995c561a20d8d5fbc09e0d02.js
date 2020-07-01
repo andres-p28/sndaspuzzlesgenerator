@@ -1,10 +1,10 @@
 self.__precacheManifest = (self.__precacheManifest || []).concat([
   {
-    "revision": "bd70197f01ea9977a2056ba8a36ab3c5",
+    "revision": "929db1437aa1069225431d91b44e6b93",
     "url": "/sndaspuzzlesgenerator/index.html"
   },
   {
-    "revision": "aa285b8f43844115ba94",
+    "revision": "26a18c7ce77db217f587",
     "url": "/sndaspuzzlesgenerator/static/css/main.5f361e03.chunk.css"
   },
   {
@@ -16,8 +16,8 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([
     "url": "/sndaspuzzlesgenerator/static/js/2.d608b861.chunk.js.LICENSE.txt"
   },
   {
-    "revision": "aa285b8f43844115ba94",
-    "url": "/sndaspuzzlesgenerator/static/js/main.a189836b.chunk.js"
+    "revision": "26a18c7ce77db217f587",
+    "url": "/sndaspuzzlesgenerator/static/js/main.27cf754f.chunk.js"
   },
   {
     "revision": "c2153840ededa3f7ab31",
