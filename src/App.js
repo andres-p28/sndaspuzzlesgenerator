@@ -36,23 +36,24 @@ class BoardState {
       x: undefined,
       y: undefined,
     },
+    isWhite: "",
   });
   mode = observable.box("POSICIONAR");
   grabbing = observable.box("");
   selected = observable([0, 0]);
   pieces = observable([
-    { type: "white_l", id: "white_l_1", direction: 1, y: 2, x: 1 },
-    { type: "white_line", id: "white_line_1", direction: 0, y: 3, x: 1 },
-    { type: "white_t", id: "white_t", direction: 2, y: 4, x: 1 },
-    { type: "white_line", id: "white_line_2", direction: 0, y: 5, x: 1 },
-    { type: "white_l", id: "white_l_2", direction: 2, y: 6, x: 1 },
-    { type: "white_cross", id: "white_cross", direction: 0, y: 4, x: 2 },
-    { type: "black_l", id: "black_l_1", direction: 0, y: 2, x: 7 },
-    { type: "black_line", id: "black_line_1", direction: 0, y: 3, x: 7 },
-    { type: "black_t", id: "black_t", direction: 0, y: 4, x: 7 },
-    { type: "black_line", id: "black_line_2", direction: 0, y: 5, x: 7 },
-    { type: "black_l", id: "black_l_2", direction: 3, y: 6, x: 7 },
-    { type: "black_cross", id: "black_cross", direction: 0, y: 4, x: 6 },
+    { type: "white_l", id: "white_l_1", direction: 0, y: 2, x: 7 },
+    { type: "white_line", id: "white_line_1", direction: 0, y: 3, x: 7 },
+    { type: "white_t", id: "white_t", direction: 0, y: 4, x: 7 },
+    { type: "white_line", id: "white_line_2", direction: 0, y: 5, x: 7 },
+    { type: "white_l", id: "white_l_2", direction: 3, y: 6, x: 7 },
+    { type: "white_cross", id: "white_cross", direction: 0, y: 4, x: 6 },
+    { type: "black_l", id: "black_l_1", direction: 1, y: 2, x: 1 },
+    { type: "black_line", id: "black_line_1", direction: 0, y: 3, x: 1 },
+    { type: "black_t", id: "black_t", direction: 2, y: 4, x: 1 },
+    { type: "black_line", id: "black_line_2", direction: 0, y: 5, x: 1 },
+    { type: "black_l", id: "black_l_2", direction: 2, y: 6, x: 1 },
+    { type: "black_cross", id: "black_cross", direction: 0, y: 4, x: 2 },
   ]);
 
   rotate() {
@@ -88,6 +89,7 @@ class BoardState {
             x,
             y,
           },
+          isWhite: piece.type.includes("white"),
         };
         set(this.lastMove, event);
       }
@@ -131,9 +133,11 @@ const StyledBox = styled.div`
   position: relative;
   height: 54px;
   width: 54px;
-  border: 3px solid ${(props) => (props.isTo ? "red" : "black")};
+  border: 3px solid
+    ${(props) => (props.isTo ? `${props.movementColor}` : "black")};
   display: inline-block;
-  background-color: ${(props) => (props.isFrom ? "red" : "#024438")};
+  background-color: ${(props) =>
+    props.isFrom ? `${props.movementColor}` : "#024438"};
 `;
 
 const StyledRow = styled.div`
@@ -173,6 +177,7 @@ const Box = observer((props) => {
     boardState.selected[0] === row && boardState.selected[1] === column;
   const { x: fromX, y: fromY } = boardState.lastMove.from;
   const { x: toX, y: toY } = boardState.lastMove.to;
+  const movementColor = boardState.lastMove.isWhite ? "red" : "green";
   const mode = boardState.mode.get();
   const isFrom = row === fromX && column === fromY && mode === "MOVER";
   const isTo = row === toX && column === toY && mode === "MOVER";
@@ -185,6 +190,7 @@ const Box = observer((props) => {
       onClick={() => boardState.select(row, column)}
       isFrom={isFrom}
       isTo={isTo}
+      movementColor={movementColor}
     >
       <SelectionBox isSelected={isSelected} data-html2canvas-ignore />
       {piece && piece.id !== boardState.grabbing.get() && (
@@ -246,7 +252,15 @@ const Wrapper = styled.div`
   justify-content: space-between;
 `;
 
-const Radio = styled.input``;
+const Radio = styled.input`
+  margin-right: 30 px;
+`;
+
+const Ins = styled.div`
+  font-size: 21px;
+  text-align: left;
+  margin-top: 30px;
+`;
 
 const App = observer(
   class AppClass extends React.Component {
@@ -263,7 +277,6 @@ const App = observer(
       document.addEventListener("keydown", this.handleKeyDown);
     }
     handleKeyDown = (event) => {
-      console.log(JSON.parse(JSON.stringify(boardState)));
       switch (event.key) {
         case "ArrowUp": {
           boardState.moveSelectUp();
@@ -325,44 +338,63 @@ const App = observer(
 
     render() {
       return (
-        <Wrapper className="App">
-          <Board inneRef={this.boardRef} />
-          <label htmlFor="posicionar">POSICIONAR</label>
-          <Radio
-            id="posicionar"
-            type="radio"
-            name="mode"
-            value="POSICIONAR"
-            checked={boardState.mode.get() === "POSICIONAR"}
-            onChange={(e) => {
-              boardState.mode.set(e.target.value);
-              this.boardRef.current.focus();
-            }}
-            tabIndex="-1"
-          />
-          <label htmlFor="mover">MOVER</label>
-          <Radio
-            id="mover"
-            type="radio"
-            name="mode"
-            value="MOVER"
-            checked={boardState.mode.get() === "MOVER"}
-            onChange={(e) => {
-              boardState.mode.set(e.target.value);
-              this.boardRef.current.focus();
-            }}
-            tabIndex="-1"
-          />
-          <button onClick={this.handleDownload}>download</button>
-          <Moves>
-            {this.state.movesList.map((src) => (
-              <SnapshotWrapper>
-                <Snapshot src={`${src}`} />
-              </SnapshotWrapper>
-            ))}
-          </Moves>
-          <div ref={this.portalRef} />
-        </Wrapper>
+        <div className="App">
+          <Wrapper>
+            <Board inneRef={this.boardRef} />
+            <div>
+              <label htmlFor="posicionar">POSICIONAR</label>
+              <Radio
+                id="posicionar"
+                type="radio"
+                name="mode"
+                value="POSICIONAR"
+                checked={boardState.mode.get() === "POSICIONAR"}
+                onChange={(e) => {
+                  boardState.mode.set(e.target.value);
+                  this.boardRef.current.focus();
+                }}
+                tabIndex="-1"
+              />
+              <label htmlFor="mover">MOVER</label>
+              <Radio
+                id="mover"
+                type="radio"
+                name="mode"
+                value="MOVER"
+                checked={boardState.mode.get() === "MOVER"}
+                onChange={(e) => {
+                  boardState.mode.set(e.target.value);
+                  this.boardRef.current.focus();
+                }}
+                tabIndex="-1"
+              />
+              <button onClick={this.handleDownload}>Descargar</button>
+            </div>
+            <Moves>
+              {this.state.movesList.map((src) => (
+                <SnapshotWrapper>
+                  <Snapshot src={`${src}`} />
+                </SnapshotWrapper>
+              ))}
+            </Moves>
+            <div ref={this.portalRef} />
+          </Wrapper>
+          <Ins>
+            Instrucciones:
+            <ul>
+              <li>Mover seleccion con flechas del teclado</li>
+              <li>Enter para tomar una pieza</li>
+              <li>R para girarla</li>
+              <li>Enter para soltar la pieza</li>
+              <li>Modo POSICIONAR permite posicionar la posicion inicial</li>
+              <li>Modo MOVER genera una captura por cada movimiento</li>
+              <li>
+                Descargar: descarga todas las imagenes (se recomienda dentro de
+                carpeta)
+              </li>
+            </ul>
+          </Ins>
+        </div>
       );
     }
   }
