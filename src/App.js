@@ -277,6 +277,8 @@ const App = observer(
       document.addEventListener("keydown", this.handleKeyDown);
     }
     handleKeyDown = (event) => {
+      event.preventDefault();
+
       switch (event.key) {
         case "ArrowUp": {
           boardState.moveSelectUp();
@@ -307,6 +309,10 @@ const App = observer(
         }
         case "r": {
           boardState.rotate();
+          break;
+        }
+        case "Escape": {
+          boardState.grabbing.set("");
           break;
         }
         default:
