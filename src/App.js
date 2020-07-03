@@ -1,6 +1,8 @@
 import "./App.css";
 import ReactDOM from "react-dom";
 import { observable, set } from "mobx";
+import { types, onSnapshot } from "mobx-state-tree";
+import { UndoManager } from "mst-middlewares";
 import { observer } from "mobx-react";
 import styled from "styled-components";
 import React from "react";
@@ -39,8 +41,10 @@ class BoardState {
     isWhite: "",
   });
   mode = observable.box("POSICIONAR");
+  inititialPosition = observable([]);
   grabbing = observable.box("");
   selected = observable([0, 0]);
+  sendas = observable.box("");
   pieces = observable([
     { type: "white_l", id: "white_l_1", direction: 0, y: 2, x: 7 },
     { type: "white_line", id: "white_line_1", direction: 0, y: 3, x: 7 },
@@ -118,7 +122,106 @@ class BoardState {
   moveSelectRight() {
     this.selected[1] = Math.max(Math.min(this.selected[1] + 1, 8), 0);
   }
+
+  setMode(mode) {
+    this.mode.set(mode);
+
+    if (mode === "MOVER") {
+      this.inititialPosition.replace(JSON.parse(JSON.stringify(this.pieces)));
+    }
+  }
+
+  reset() {
+    if (this.inititialPosition.length > 0) {
+      this.pieces.replace(this.inititialPosition);
+    }
+    set(this.lastMove, {
+      from: {
+        x: undefined,
+        y: undefined,
+      },
+      to: {
+        x: undefined,
+        y: undefined,
+      },
+      isWhite: "",
+    });
+    this.sendas.set("");
+  }
 }
+const boardState = observable.box(new BoardState()).get();
+
+const PieceState = types
+  .model({
+    type: "",
+    id: "",
+    direction: 0,
+    x: 0,
+    y: 0,
+  })
+  .actions((self) => {
+    return {
+      rotate(dir) {
+        self.direction = (self.direction - Math.pow(-1, dir)) % 4;
+      },
+    };
+  });
+
+const BoardStateTree = types
+  .model({
+    history: types.optional(UndoManager, {}),
+    activeCell: types.array([4, 4]),
+    grabbing: types.safeReference(PieceState),
+    pieces: types.array(PieceState, [
+      { type: "white_l", id: "white_l_1", direction: 0, y: 2, x: 7 },
+      { type: "white_line", id: "white_line_1", direction: 0, y: 3, x: 7 },
+      { type: "white_t", id: "white_t", direction: 0, y: 4, x: 7 },
+      { type: "white_line", id: "white_line_2", direction: 0, y: 5, x: 7 },
+      { type: "white_l", id: "white_l_2", direction: 3, y: 6, x: 7 },
+      { type: "white_cross", id: "white_cross", direction: 0, y: 4, x: 6 },
+      { type: "black_l", id: "black_l_1", direction: 1, y: 2, x: 1 },
+      { type: "black_line", id: "black_line_1", direction: 0, y: 3, x: 1 },
+      { type: "black_t", id: "black_t", direction: 2, y: 4, x: 1 },
+      { type: "black_line", id: "black_line_2", direction: 0, y: 5, x: 1 },
+      { type: "black_l", id: "black_l_2", direction: 2, y: 6, x: 1 },
+      { type: "black_cross", id: "black_cross", direction: 0, y: 4, x: 2 },
+    ]),
+  })
+  .actions((self) => {
+    setUndoManager(self);
+    return {
+      afterCreate() {},
+      grab() {
+        const [x, y] = self.activeCell;
+        if (self.grabbing) {
+          self.grabbing.set(undefined);
+          return;
+        }
+        const piece = self.pieces.find((p) => p.x === x && p.y === y);
+        if (piece) {
+          self.grabbing.set(PieceState);
+        }
+      },
+      move(m, n) {
+        const [x, y] = self.activeCell;
+        self.activeCell.replace([x + m, y + n]);
+        if (self.grabbing) {
+          self.grabbing.x = x + m;
+          self.grabbing.y = y + n;
+        }
+      },
+      rotate(dir) {
+        if (self.grabbing) {
+          self.grabbing.rotate(dir);
+        }
+      },
+    };
+  });
+
+export let undoManager = {};
+export const setUndoManager = (targetStore) => {
+  undoManager = targetStore.history;
+};
 
 const Piece = styled.img`
   position: absolute;
@@ -157,7 +260,6 @@ const Moves = styled.div`
   width: 546px;
   text-align: left;
 `;
-const boardState = observable.box(new BoardState()).get();
 
 const SelectionBox = styled.div`
   width: 100%;
@@ -167,6 +269,17 @@ const SelectionBox = styled.div`
   left: -3px;
   z-index: 2;
   ${(props) => props.isSelected && "border: 4px solid red"};
+`;
+
+const SendasBox = styled.div`
+  opacity: 0.6;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 3;
+  background-color: ${(props) => props.movementColor};
 `;
 
 const Box = observer((props) => {
@@ -184,7 +297,7 @@ const Box = observer((props) => {
   const grabbedPiece = boardState.pieces.find(
     (p) => p.id === boardState.grabbing.get()
   );
-
+  const isSendas = piece && boardState.sendas.get() === piece.id;
   return (
     <StyledBox
       onClick={() => boardState.select(row, column)}
@@ -207,6 +320,7 @@ const Box = observer((props) => {
           alt=""
         />
       )}
+      {isSendas && <SendasBox movementColor={movementColor} />}
     </StyledBox>
   );
 });
@@ -262,6 +376,15 @@ const Ins = styled.div`
   margin-top: 30px;
 `;
 
+const Actions = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+
+const ActionItem = styled.div`
+  margin: 20px 0;
+`;
+
 const App = observer(
   class AppClass extends React.Component {
     constructor() {
@@ -315,6 +438,17 @@ const App = observer(
           boardState.grabbing.set("");
           break;
         }
+        case "s": {
+          const grabbing = boardState.grabbing.get();
+          if (grabbing) {
+            boardState.sendas.set(grabbing);
+            boardState.release();
+            if (boardState.mode.get() === "MOVER") {
+              this.handlePhoto();
+            }
+          }
+          break;
+        }
         default:
           break;
       }
@@ -327,6 +461,11 @@ const App = observer(
           movesList: [...this.state.movesList, canvas.toDataURL()],
         });
       });
+    };
+
+    handleReset = () => {
+      boardState.reset();
+      this.setState({ movesList: [] });
     };
 
     handleDownload = () => {
@@ -347,35 +486,44 @@ const App = observer(
         <div className="App">
           <Wrapper>
             <Board inneRef={this.boardRef} />
-            <div>
-              <label htmlFor="posicionar">POSICIONAR</label>
-              <Radio
-                id="posicionar"
-                type="radio"
-                name="mode"
-                value="POSICIONAR"
-                checked={boardState.mode.get() === "POSICIONAR"}
-                onChange={(e) => {
-                  boardState.mode.set(e.target.value);
-                  this.boardRef.current.focus();
-                }}
-                tabIndex="-1"
-              />
-              <label htmlFor="mover">MOVER</label>
-              <Radio
-                id="mover"
-                type="radio"
-                name="mode"
-                value="MOVER"
-                checked={boardState.mode.get() === "MOVER"}
-                onChange={(e) => {
-                  boardState.mode.set(e.target.value);
-                  this.boardRef.current.focus();
-                }}
-                tabIndex="-1"
-              />
-              <button onClick={this.handleDownload}>Descargar</button>
-            </div>
+            <Actions>
+              <ActionItem>
+                <label htmlFor="posicionar">POSICIONAR</label>
+                <Radio
+                  id="posicionar"
+                  type="radio"
+                  name="mode"
+                  value="POSICIONAR"
+                  checked={boardState.mode.get() === "POSICIONAR"}
+                  onChange={(e) => {
+                    boardState.setMode(e.target.value);
+                    this.boardRef.current.focus();
+                  }}
+                  tabIndex="-1"
+                />
+              </ActionItem>
+              <ActionItem>
+                <label htmlFor="mover">MOVER</label>
+                <Radio
+                  id="mover"
+                  type="radio"
+                  name="mode"
+                  value="MOVER"
+                  checked={boardState.mode.get() === "MOVER"}
+                  onChange={(e) => {
+                    boardState.setMode(e.target.value);
+                    this.boardRef.current.focus();
+                  }}
+                  tabIndex="-1"
+                />
+              </ActionItem>
+              <ActionItem>
+                <button onClick={this.handleDownload}>Descargar</button>
+              </ActionItem>
+              <ActionItem>
+                <button onClick={this.handleReset}>Reiniciar posicion</button>
+              </ActionItem>
+            </Actions>
             <Moves>
               {this.state.movesList.map((src) => (
                 <SnapshotWrapper>
