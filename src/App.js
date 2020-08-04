@@ -223,6 +223,8 @@ export const setUndoManager = (targetStore) => {
   undoManager = targetStore.history;
 };
 
+const newBoardState = BoardStateTree.create({});
+
 const Piece = styled.img`
   position: absolute;
   top: 0;
